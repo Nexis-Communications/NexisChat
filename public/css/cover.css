@@ -1,0 +1,96 @@
+/*
+ * Globals
+ */
+
+/* Links */
+a,
+a:focus,
+a:hover {
+  color:#FFFFC9 !important;
+}
+
+/*
+ * Base structure
+ */
+html {
+  min-height: 100%;
+}
+html,
+body {
+  position: relative;
+  height: 100%;
+  background-color: #333;
+  overflow: auto;
+}
+
+body {
+  color: #FFFFC9;
+  text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
+  box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+hr {
+  color: #FFFFC9;
+  border: 1px inset #FFFFC9;
+}
+
+/* 
+ * Container
+ */
+.container {
+   max-width: 100%;
+   flex: 1;
+ }
+
+.content {
+  margin: 10px;
+}
+
+/*
+ * Header
+ */
+.navbar {
+  color: #FFFFC9 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+  
+.header .navbar {
+  background: #383838;
+}
+
+/*
+ * Footer
+ */
+.footer {
+  color: #FFFFC9;
+  width: 100%;
+}
+.footer i {
+position: absolute;
+bottom: 0;
+right: 10px;
+
+}
+
+.table {
+    background: #383838;
+}
+
+/* support page */
+.badge:empty.badge-icon {
+  display: inline-block;
+  width: .7em;
+  height: .7em;
+  padding: 0;
+  min-width: 5px;
+  margin: .5em;
+  border-radius: 50%
+}
+
+.pad-all {
+  padding: 15px;
+}
