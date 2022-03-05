@@ -130,7 +130,10 @@ nb-configuration.xml
 /.php-cs-fixer.php
 
 #Custom
-awstats-icon
-awstatsicons
-stats
+/awstats-icon/
+/awstatsicons/
+/stats/
 *.bat
+/public/.htaccess
+/git/
+/icon/

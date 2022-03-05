@@ -1,0 +1,36 @@
+
+body {
+
+  background-color: #333;
+  background-image: url('/img/stars.jpg');
+  background-size: 50%;
+  background-repeat: repeat;
+
+}
+
+.border-bottom {
+  border-bottom-color: #FFFFC7 !important;
+}
+
+hr {
+  color: #FFFFC9;
+  border: 1px inset #FFFFC9;
+}
+
+
+#newMessages {
+  width:20px !important;
+  height:20px !important;
+}
+#autoRefresh {
+  width:20px !important;
+  height:20px !important;
+}
+
+.pm-send * {
+  color:#9ebefb !important
+}
+
+.pm-receive * {
+  color:#f54242 !important
+}
