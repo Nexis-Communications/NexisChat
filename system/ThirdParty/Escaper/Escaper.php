@@ -406,7 +406,6 @@ class Escaper
         if ($result === false) {
             return ''; // return non-fatal blank string on encoding errors from users
         }
-
         return $result;
     }
 }
