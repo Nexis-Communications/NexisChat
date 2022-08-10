@@ -483,6 +483,7 @@ class Admin extends BaseController
         $data['flagged'] =  $builder->findAll();
 
         $builder = $this->messagesModel;
+        $builder = $builder->where('rcpt',0);
         $data['messages'] =  $builder->limit(10)->orderBy('id','desc')->find();
 
         //dd($data['flagged']);
