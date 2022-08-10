@@ -8,47 +8,47 @@
                   <div class="card-body">
                     <div class="d-flex flex-row justify-content-between mb-2">
                       <h3 class="card-title mb-1">User Details</h4>
-                      <p class="text-muted mb-1"><a href="/admin/dashboard/user/edit/<?= $user->id ?>" class="btn btn-outline-primary">Edit</a></p>
+                      <p class="text-muted mb-1"><a href="/admin/dashboard/user/edit/<?= $userData->id ?>" class="btn btn-outline-primary">Edit</a></p>
                     </div>
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Name:</h6>
-                      <div class="col-sm-9"><p><?= $user->username ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->username ?></p></div>
                     </div>
                     
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Email:</h6>
-                      <div class="col-sm-9"><p><?= $user->email ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->email ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Status:</h6>
-                      <div class="col-sm-9"><p><?= $user->status ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->status ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Active:</h6>
-                      <div class="col-sm-9"><p><?= getStatusHTML($user->active) ?></p></div>
+                      <div class="col-sm-9"><p><?= getStatusHTML($userData->active) ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Created:</h6>
-                      <div class="col-sm-9"><p><?= $user->created_at ?? "&nbsp;" ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->created_at ?? "&nbsp;" ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Updated:</h6>
-                      <div class="col-sm-9"><p><?= $user->updated_at ?? "&nbsp;" ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->updated_at ?? "&nbsp;" ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Deleted:</h6>
-                      <div class="col-sm-9"><p><?= $user->deleted_at ?? "&nbsp;" ?></p></div>
+                      <div class="col-sm-9"><p><?= $userData->deleted_at ?? "&nbsp;" ?></p></div>
                     </div>
 
                     <div class=" row">
                       <h6 for="name" class="col-sm-3">Groups:</h6>
                       <div class="col-sm-9">
-                        <p><?= getUserGroups($user->id,1) ?></p>
+                        <p><?= getUserGroups($userData->id,1) ?></p>
                       </div>
                     </div>
 

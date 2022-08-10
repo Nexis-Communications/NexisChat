@@ -212,7 +212,7 @@ class Admin extends BaseController
         //dd($data);
         $userModel = model('App\Models\UserModel');
 
-        $data['user'] = $userModel->asObject()->find($id);
+        $data['userData'] = $userModel->asObject()->find($id);
         $data['groups'] = getUserGroups($id);
         $data['groupsHtml'] = getUserGroups($id,1);
 
