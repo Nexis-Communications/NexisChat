@@ -33,16 +33,16 @@
 	<div class="col-md-9">
 		<div class="panel">
 			<div class="panel-body pb-3">
-<!--
 
-<?php print_r(json_decode(getFaq())); ?>
 
--->
+<?php //dd(getFaq()); ?>
+
+
 
 <?php
 
-if ($faqs = json_decode(getFaq())) {
-	
+if ($faqs = getFaq()) {
+	//dd($faqs);
 	if ($faqs->data->total > 0) {
 
 		if (isset($faqs->data->categories)) {

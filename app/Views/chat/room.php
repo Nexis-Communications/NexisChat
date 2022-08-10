@@ -15,6 +15,7 @@ use CodeIgniter\I18n\Time;
 
 
 $hasMessage = session()->get('message');
+$hasErrors = session()->get('errors');
 
 
 ?>
@@ -37,18 +38,26 @@ $hasMessage = session()->get('message');
               </button>
             </div>
           <?php } ?>
+          <?php if ($hasErrors) { ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <?php print_r($hasErrors) ?>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <?php } ?>
     
           <div class="row">
-              <div class="col-lg-1">
-                <h2><?= $room->details->name ?></h2>
+              <div class="col d-flex justify-content-center justify-content-md-start">
+                <h2><?= $room->details->name ?></h2> <?= $vip ? 'VIP':'' ?>
               </div>
          
-              <div class="col-1 mb-3">
-                <a href="/chat/<?= $room->details->alias ?>/leave" type="button" class="btn btn-primary">Leave Room</a>
+              <div class="col-lg-3 col-xl-2 mb-3">
+                <a href="/chat/<?= $room->details->alias ?>/leave" type="button" class="btn btn-primary form-control">Leave Room</a>
               </div>
               <?php if ($room->details->private) { ?>
-              <div class="col-2 mb-3">
-                <a href="/chat/<?= $room->details->alias ?>/return" type="button" class="btn btn-primary">Return to Room</a>
+              <div class="col-lg-3 col-xl-2 mb-3">
+                <a href="/chat/<?= $room->details->alias ?>/return" type="button" class="btn btn-primary form-control">Return to Room</a>
               </div>
               <?php } ?>
 
@@ -154,16 +163,30 @@ $hasMessage = session()->get('message');
               <div class="row">
                 <label for="inputGender" class="form-label"><?= lang('Chat.gender') ?>:</label>
                 <div class="col">
-                  <select class="form-control" name="gender" id="inputGender">
-                    <?php
-                      if ($genders) {
-                        foreach ($genders as $gender) {?>
-                          <option value="<?= $gender->id ?>"<?= ($options->gender == $gender->id) ? ' SELECTED':''?>><?= $gender->description ?></option>
-                          <?php
+                  <?php if ($vip) { ?>
+                    <input class="form-control" name="gender" id="inputGender" type="text" list="genders" onfocus="this.value=''" onchange="this.blur();" placeholder="Unspecified" value="<?= ($options->mood) ? $options->gender:'Unspecified' ?>">
+                      <datalist id="genders">
+                        <?php
+                            if ($genders) {
+                              foreach ($genders as $gender) {?>
+                                <option value="<?= $gender->description ?>"></option>
+                                <?php
+                              }
+                            }
+                        ?>
+                    </datalist>
+                  <?php } else { ?>
+                    <select class="form-control" name="gender" id="inputGender">
+                      <?php
+                        if ($genders) {
+                          foreach ($genders as $gender) {?>
+                            <option value="<?= $gender->id ?>"<?= ($options->gender == $gender->id) ? ' SELECTED':''?>><?= $gender->description ?></option>
+                            <?php
+                          }
                         }
-                      }
-                    ?>
-                 </select>
+                      ?>
+                  </select>
+                 <?php } ?>
                 </div>
               </div>
             </div>
@@ -171,16 +194,33 @@ $hasMessage = session()->get('message');
               <div class="row">
                 <label for="inputMood" class="form-label"><?= lang('Chat.mood') ?>:</label>
                 <div class="col">
-                  <select class="form-control" name="mood" id="inputMood">
-                    <?php
-                      if ($moods) {
-                        foreach ($moods as $mood) {?>
-                          <option value="<?= $mood->id ?>"<?= ($options->mood == $mood->id) ? ' SELECTED':''?>><?= $mood->description ?></option>
-                          <?php
+                  <?php //d($options) ?>
+                  <?php if ($vip) { ?>
+                    <input class="form-control" name="mood" id="inputMood" type="text" list="moods" onfocus="this.value=''" onchange="this.blur();" placeholder="Undeclared" value="<?= ($options->mood) ? $options->mood:'Undeclared' ?>">
+                      <datalist id="moods">
+                        <?php
+                            if ($moods) {
+                              foreach ($moods as $mood) {?>
+                                <option value="<?= $mood->description ?>"></option>
+                                <?php
+                              }
+                            }
+                        ?>
+                    </datalist>
+                  <?php } else { ?>
+                    <select class="form-control" name="mood" id="inputMood">
+                      <?php
+                        if ($moods) {
+                          foreach ($moods as $mood) {?>
+                            <option value="<?= $mood->id ?>"<?= ($options->mood == $mood->id ) ? ' SELECTED':''?>><?= $mood->description ?></option>
+                        
+                            <?php
+                          }
                         }
-                      }
-                    ?>
-                  </select>
+                      ?>
+                    </select>
+                  <?php } ?>
+
                 </div>
               </div>
             </div>
@@ -248,13 +288,20 @@ if ($messages->current) {
         $color = 'color:#f54242 !important';
         $class = 'pm-receive';
       }
+
+      if ($message->room == 0 ) { 
+        $color = 'color:#f0ab6e !important';
+        $class = 'system-message';
+      }
 ?>
         <div class="<?= ($class) ? $class . ' ': '' ?>text-left border-bottom d-flex align-items-start<?= (isset($message->ignored)) ? ' text-muted':'' ?>" style="<?= $color ?>">
             <?php 
-            if ($message->chatpic) {
+            if ($img = chatpicExists($message->chatpic)) {
+              $imgWidth = $img->previewWidth ?? NULL;
+              $imgHeight = $img->previewHeight ?? NULL;
               ?>
-              <div style="max-height:90px; max-width:120px" class="mr-2 mt-3">
-             <img src="/chatpics/<?= $message->chatpic ?>.gif" alt="profile" class="img-fluid">
+              <div class="mr-2 mt-3">
+             <img src="/chatpics/view/<?= $message->chatpic ?>" alt="<?= $message->chatpic ?>" title="<?= $message->chatpic ?>" class="img-fluid" style="max-height:100px; max-width:150px;" >
             </div>
                 
               <?php
@@ -285,14 +332,18 @@ if ($messages->current) {
                       $hasMood = 1;
                     }
                   } else {
-                    $hasMood = 2;
+                    if (($message->mood) && ($message->mood != "Undeclared")) {
+                      $hasMood = 2;
+                    }
                   }
                   if (is_numeric($message->gender)) {
                     if ($message->gender > 1) {
                       $hasGender = 1;
                     }
                   } else {
-                    $hasGender = 2;
+                    if (($message->gender) && ($message->gender != "Unspecified")) {
+                      $hasGender = 2;
+                    }
                   }
                 }
                 ?>
@@ -303,15 +354,19 @@ if ($messages->current) {
               <p>
                 <?= nl2br($message->data) ?>
               </p>
+              
               <p class="small">
-                <?= ($message->location) ? lang('Chat.from') . ' ' . $message->location:lang('Chat.sent') ?> <?= lang('Chat.on') ?> <?= Time::parse($message->created_at)->toLocalizedString('E MMM d, yyyy') ?> <?= lang('Chat.on') ?> <?= Time::parse($message->created_at)->toLocalizedString('hh:mm:ss') ?>
+                <?= ($message->location) ? lang('Chat.from') . ' ' . $message->location:lang('Chat.sent') ?> <?= lang('Chat.on') ?> <?= Time::parse($message->created_at)->toLocalizedString('E MMM d, yyyy') ?> <?= lang('Chat.at') ?> <?= Time::parse($message->created_at)->toLocalizedString('HH:mm:ss') ?>
+                <?php if ($message->room > 0) {?>
                 <?php if (($user->id != $message->uid) && ($message->uid != 0)): ?>
                 <?= lang('Chat.checkIgnore') ?>: <input type="checkbox" name="ignore" value="<?= $message->id ?>">
                 <?php if (isset($user->email)) { ?>
                 <?= lang('Chat.flagMessage') ?>: <?= ($message->flagged ?? 0 == 1) ? lang('Chat.flagged'):'<input type="checkbox" name="flag[]" value="'. $message->id .'">' ?>
                 <?php } ?>
                 <?php endif ?>
+                <?php } ?>
               </p>
+              
             </div>
         </div>
 <?php
@@ -324,7 +379,7 @@ if ($messages->current) {
 <?php } ?>
 </form>
 <!-- This is just for a little 80's/90's fun. If you get in, sent us a screenshot! -->
-<i id="pi" style="position: fixed; bottom:50px; right:10px;color:#424242!important;cursor:default;">&pi;</i>
+<i id="pi" style="position: fixed; bottom:10px; right:10px;color:#424242!important;cursor:default;">&pi;</i>
 <script type="text/javascript" src="/js/pi.js"></script>
 
 <?= $this->endSection() ?>

@@ -34,3 +34,7 @@ hr {
 .pm-receive * {
   color:#f54242 !important
 }
+
+.system-message * {
+  color:#f0ab6e !important
+}

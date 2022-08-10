@@ -37,7 +37,7 @@
   <body>
     <div class="container-scroller">
 
-    <?= $this->include('admin/dashboard/widgets/probanner') ?>
+    <?= $this->include('admin/dashboard/widgets/banner') ?>
 
     <?= $this->include('admin/dashboard/partials/sidebar') ?>
       <!-- partial -->
@@ -47,7 +47,16 @@
         <!-- partial -->
         <div class="main-panel">
           <div class="content-wrapper">
-            <?= $this->include('admin/dashboard/partials/banner') ?>
+            <?php
+             $session = \Config\Services::session();
+             $this->error = $session->get('errors') ?? NULL;
+              if ( $this->error ) {
+                //dd($error);
+            ?>
+            <?= $this->include('admin/dashboard/partials/errorbanner') ?>
+            <?php
+              }
+            ?>
 
 <?= $this->renderSection('main') ?>
 

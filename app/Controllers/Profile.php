@@ -3,6 +3,9 @@
 namespace App\Controllers;
 
 use CodeIgniter\HTTP\RequestInterface;
+use App\Models\MessagesModel;
+use App\Models\User;
+use App\Models\HandleModel;
 
 class Profile extends BaseController
 {
@@ -14,6 +17,9 @@ class Profile extends BaseController
         $this->config = new \stdClass();
         $this->uri = service('uri');
         $this->auth = service('authentication');
+        $this->messagesModel = new MessagesModel();
+        $this->userModel = new User();
+        $this->handleModel = new HandleModel();
 
 
     }
@@ -30,6 +36,9 @@ class Profile extends BaseController
         $data['user'] = $this->auth->user();
 
         $data['tags'] = json_decode(getTags($this->auth->user()->id));
+
+        d($data['tagsearchresults'] = ($data['tags']) ? $this->searchTags($data['tags']) :NULL);
+        
         //print_r($data['tags']);
 
         return view('profile/index',$data);
@@ -99,7 +108,15 @@ class Profile extends BaseController
         $request = service('request');
         if ($requestData = $request->getPost()) {
             if ($requestData['tags']) {
+                //d($requestData['tags']);
+                foreach ($requestData['tags'] as $tag) {
+                    if (strlen($tag) < 3) {
+                        //dd($tag);
 
+                        return redirect()->back()->with('error', 'Tags must be at least 3 characters long.');
+                    }
+                }
+               // dd();
                 $tagsModel = model('App\Models\TagsModel');
 
                 $jsonTags = json_encode(array_values(array_filter($requestData['tags'])));
@@ -117,6 +134,63 @@ class Profile extends BaseController
             //print_r($requestData);
         }
         return redirect()->back()->with('error', "no keywords updated");
+
+    }
+
+    private function searchTags($tags) {
+
+        //d($tags);
+        $results = null;
+
+        $searchModels = array('messages'=>'data','user'=>array('username','email'),'handle'=>'handle');
+
+        foreach ($searchModels as $model=>$fields) {
+            switch ($model) {
+                case 'messages':
+                    $modelSelect = ['rcpt','data','location'];
+                    $modelClass = 'messagesModel';
+                    break;
+                case 'user':
+                    $modelSelect = ['username','email'];
+                    $modelClass = 'userModel';
+                    break;
+                case 'handle':
+                    $modelSelect = ['handle'];
+                    $modelClass = 'handleModel';
+                    break;
+                default:
+                    //dd($results);
+                    break;
+            }
+            $builder = $this->$modelClass->builder();
+
+            $builder->select();
+            switch ($model) {
+                case 'messages':
+                    $builder->where('rcpt',0);
+                    $builder->where('uid !=',$this->auth->user()->id);
+                    break;
+
+            }
+            $builder->groupStart();
+            foreach ($tags as $tag) {
+                if (is_array($fields)) {
+                    foreach ($fields as $field) {
+                        $builder->orLike($field,$tag);
+                    }
+                } else {
+                    $builder->orLike($fields,$tag);
+                }
+
+            }
+            $builder->groupEnd();
+            //d($builder->getCompiledSelect());
+            $results[$model] = $builder->get()->getResultObject();
+            //d($results,$builder);
+
+        }
+
+        return $results;
 
     }
 

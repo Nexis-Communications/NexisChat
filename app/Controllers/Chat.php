@@ -22,6 +22,7 @@ class Chat extends BaseController
 	
 	public function __construct() 
 	{
+        
         // Loading Models
         $this->genderModel = new GenderModel();
         $this->moodModel = new MoodModel();
@@ -108,6 +109,8 @@ class Chat extends BaseController
 
     public function index($alias) // $alias is the alias for the room. Calling the chat controller directly without a room specified will redirect to the home page using the router.
     {
+        $session = \Config\Services::session();
+
         // Load System Settings
         //$this->data->settings = getSystemSettings();
 
@@ -138,7 +141,7 @@ class Chat extends BaseController
         
         $this->data->config->pageTitle = $this->data->room->details->name;
         $this->data->request = $this->request;
-        $this->data->vip = $this->authorize->inGroup([2,3,4], $this->data->user->id); // check if user is in the 'vip' group
+        $this->data->vip = $this->authorize->inGroup([2,3,4,7], $this->data->user->id); // check if user is in the 'vip' group
 
         // TODO: rooms and user group settings will allow system defaults to be overridden. rewrite code to allow for this.
         $messageage = (int) $this->data->settings['messages.agelimit']; // Time in hours to retreive old messages. This is set from the system default limit. 
@@ -161,8 +164,9 @@ class Chat extends BaseController
             $this->data->options->name = $this->data->user->username;
           }
         $this->data->options->maxmessages = end($this->data->log)['maxmessages'];
-        //dd($this->data->status,$this->data->log);
+        //d($this->data->status,$this->data->log);
         $this->data->options->chatpic = end($this->data->log)['chatpic'];
+
         $this->data->options->newmessages = end($this->data->log)['newmessages'];
         $this->data->options->autorefresh = end($this->data->log)['autorefresh'];
         $this->data->options->gender = end($this->data->log)['gender'];
@@ -185,8 +189,8 @@ class Chat extends BaseController
                     'name'  =>  'required',
                     'location' => 'permit_empty|string',
                     'chatpic'   => 'permit_empty|string',
-                    'gender'    =>  'alpha_numeric',
-                    'mood'      =>  'alpha_numeric',
+                    'gender'    =>  'permit_empty|alpha_numeric_punct',
+                    'mood'      =>  'permit_empty|alpha_numeric_punct',
                     'maxmessages'   =>  'permit_empty|numeric',
                     'message'   => 'permit_empty|string',
                 ])) {
@@ -205,7 +209,16 @@ class Chat extends BaseController
 
             //dd($this->data);
             if ($this->data->vip) {
-                $this->data->options->chatpic = $data['chatpic'] ?? NULL; // TODO: validate
+                $_chatpic = $data['chatpic'] ?? NULL; // TODO: validate
+                if ($_chatpic) {
+                    if (verifyChatpicPermissions($_chatpic)) {
+                        $this->data->options->chatpic = $_chatpic;
+                    } else {
+                        return redirect()->back()->withInput()->with('errors','Chatpic Restricted!');
+                    }
+                } else {
+                    $this->data->options->chatpic = NULL;
+                }
                 $this->data->options->newmessages = ($data['newmessages'] ?? NULL) ? 1:0; 
                 $this->data->options->autorefresh = ($data['autorefresh'] ?? NULL) ? 1:0; 
             } else {
@@ -260,10 +273,13 @@ class Chat extends BaseController
         $this->data->room->handles = array();
         //$this->data->room->users->active = array();
 
+        //d($this->data->room->users->active);
+        
         foreach ($this->data->room->users->active as $key=>$user) {
-            if ($userHandle = $this->handleModel->select('handle')->where('uid',$this->data->user->id)->first()) {
+            //d($user->id);
+            if ($userHandle = $this->handleModel->select('handle')->where('uid',$user->id)->first()) {
                 //d($userHandle);
-               //d($this->data,$user);
+                //d($this->data,$user);
                 $this->data->room->handles[$user->id] = $userHandle->handle;
                 
                 $this->data->room->users->active[$user->id]->handle = $userHandle->handle;
@@ -320,7 +336,6 @@ class Chat extends BaseController
 
             $messages->select($selectStatement);
 
-            $messages->where('room',$this->data->room->details->id); 
 
             // This section uses a maxAge variable which will allow us to view past messages. 
             // TODO: consider making vip option to set age.
@@ -340,6 +355,8 @@ class Chat extends BaseController
             
             // We're looking for messages sent from or to the current user or to all users. 
             $messages->where('(uid = ' . $this->data->user->id .' OR rcpt = ' . $this->data->user->id .' OR rcpt = 0 ) ');
+            $messages->where('( room = ' . $this->data->room->details->id . ' OR room = 0 OR room = NULL )'); 
+
             $messages->orderBy('id','desc'); // new messages on top.
             $this->data->messages->current = $messages->find(); // Run the query.
             $this->data->messagesquery = $messages->getLastQuery()->getQuery(); // Save message query string so we can debug.
@@ -350,7 +367,7 @@ class Chat extends BaseController
                 $this->data->messages->last = $this->data->options->lastmessage;
             }
 
-           // d($this->data);
+            // d($this->data);
             /*
             * Ignored Messages
             * In this section, we'll cound the number of ignored messages. We'll also save a list of just the ignored messages. 
@@ -471,6 +488,14 @@ class Chat extends BaseController
             } else { // START: nick change. This will run if user is changing nick.
                 // TODO: clean up this section
 
+                $restrictedNicks = array('AllUsers','All Users', 'all users', 'Nexis Communications', 'The Park','The-Park','NC','system','admin');
+                foreach ($restrictedNicks as $restrictedNick) {
+                    if (strtolower($data['name']) == strtolower($restrictedNick)) {
+                        $this->logAction('0x452156','user.handle.restricted');
+                        return redirect()->back()->withInput()->with('error','Nick Restricted');
+                    }
+                }
+
                 if ($_registeredUsers = $this->userModel->select('id')->where('username',$data['name'])->find()) { // Check if username is currently owned by a registered user.
                     $this->logAction('0x535652','user.handle.registered');
                     return redirect()->back()->withInput()->with('error','Nick Unavailable');
@@ -559,8 +584,10 @@ class Chat extends BaseController
                         $message['rcpt_handle'] = lang('Chat.allusers');
                     }
 
-                    $message['data'] = strip_tags($data['message']); // TODO: allow vip to use tags for certain rooms?
-                    if ($message['data'] != $data['message']) {
+                    //d($data['message']);
+                    $message['data'] = htmlentities($data['message'], ENT_QUOTES); // TODO: allow vip to use tags for certain rooms?
+                    //dd($message['data']);
+                    /*if ($message['data'] != $data['message']) {
                         
                         if (!$this->logAction('0x4556','message.error.tags')) {
                             throw new \Exception("Unable to update user.");
@@ -569,7 +596,7 @@ class Chat extends BaseController
                         }
 
                         return redirect()->back()->withInput()->with('error','HTML Tags are not allowed.');
-                    }
+                    }*/
 
                 }
 
@@ -751,7 +778,7 @@ class Chat extends BaseController
     public function getMoods() {
         $model = new MoodModel();
 
-        $moods = $model->where('active',1)->find();
+        $moods = $model->where('active',1)->orderBy('description','ASC')->find();
         $data = NULL;
 
         foreach ($moods as $mood) {
@@ -768,7 +795,7 @@ class Chat extends BaseController
     public function getGenders() {
         $model = new GenderModel();
 
-        $genders = $model->where('active',1)->find();
+        $genders = $model->where('active',1)->orderBy('description','ASC')->find();
         $data = NULL;
 
         foreach ($genders as $gender) {

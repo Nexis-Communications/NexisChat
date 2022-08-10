@@ -1,0 +1,21 @@
+
+
+.search-result-box .tab-content {
+    padding: 30px 30px 10px 30px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    -moz-box-shadow: none
+}
+
+
+.text-success {
+}
+a {
+    text-decoration: none;
+    background-color: transparent;
+}
+.btn-custom {
+}
+
+.btn-custom, .btn-danger, .btn-info, .btn-inverse, .btn-pink, .btn-primary, .btn-purple, .btn-success, .btn-warning {
+}

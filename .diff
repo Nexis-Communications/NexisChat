@@ -1,0 +1,993 @@
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Config/Routes.php ../../theparkchat.com/public_html/app/Config/Routes.php
+--- ./app/Config/Routes.php	2022-07-20 21:01:25.184397950 +0000
++++ ../../theparkchat.com/public_html/app/Config/Routes.php	2022-07-01 23:47:08.568909177 +0000
+@@ -51 +50,0 @@
+-$routes->add('/admin/dashboard/user/save/(:num)','Admin::dashboardusersave/$1');
+@@ -54,9 +52,0 @@
+-$routes->add('/admin/dashboard/messages/(:num)','Admin::messagemanager/$1');
+-$routes->add('/admin/dashboard/message/view','Admin::messageview');
+-$routes->add('/admin/dashboard/message/view/(:num)','Admin::messageview/$1');
+-$routes->add('/admin/chatpics','Admin::chatpicmanager');
+-$routes->add('/admin/chatpics/groups','Admin::chatpicmanagergroups');
+-$routes->add('/admin/dashboard/flags/delete/(:num)','Admin::flagdelete/$1');
+-$routes->add('/admin/message/send/(:num)','Admin::messagesend/$1');
+-
+-
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Controllers/Admin.php ../../theparkchat.com/public_html/app/Controllers/Admin.php
+--- ./app/Controllers/Admin.php	2022-07-20 21:43:35.136996690 +0000
++++ ../../theparkchat.com/public_html/app/Controllers/Admin.php	2022-07-01 23:47:17.525380080 +0000
+@@ -10 +9,0 @@
+-use App\Models\FlaggedModel;
+@@ -13 +11,0 @@
+-use App\Models\ChatpicsKeywordsModel;
+@@ -35 +32,0 @@
+-        $this->flaggedModel = new FlaggedModel(); // available user groups
+@@ -38 +34,0 @@
+-        $this->chatpicKeywordsModel = new ChatpicsKeywordsModel(); // available user groups
+@@ -212 +207,0 @@
+-        //dd($data);
+@@ -217 +211,0 @@
+-        $data['groupsHtml'] = getUserGroups($id,1);
+@@ -243,37 +236,0 @@
+-    public function dashboardusersave($id)
+-    {
+-        $data['siteName'] = 'The Park Chat';
+-        $data['pageTitle'] = 'Edit User';
+-
+-        $data['user'] = $this->auth->user();
+-
+-        if ($this->request->getMethod() == "post") {
+-            $groups = $this->request->getPost('groups') ?? NULL;
+-
+-            if ($groups) {
+-            //d($this->request,$id,$this->request->getPost('groups'));
+-
+-                $previousGroups = $this->userGroupModel->where('user_id',$id)->find();
+-
+-                // Delete user from all groups
+-                $this->userGroupModel->where('user_id',$id)->delete();
+-                
+-                foreach ($groups as $group) {
+-                    if ($this->userGroupModel->insert(['user_id'=>$id,'group_id'=>$group])) {
+-                        // added user to group.
+-                    } else {
+-                        dd($previousGroups);
+-                    }
+-                    
+-                }
+-            }
+-
+-            return redirect()->to('/admin/dashboard/user/view/'.$id)->with('message','Successfully updated user.');
+-
+-        }
+-
+-        return redirect()->back()->withInput()->with('errors','Invalid Method');
+-
+-        
+-    }
+-
+@@ -298,0 +256 @@
++            return redirect()->back()->withInput()->with('errors','A valid user id is required.');
+@@ -437,23 +394,0 @@
+-        $data['roomsVisited'] = isset($data['actions']['rid']) ? count($data['actions']['rid']):0;
+-        $data['nicksUsed'] = isset($data['messages']['user']) ? count($data['messages']['user']):0;
+-        $data['messagesSent'] = isset($data['messages']['data']) ? count($data['messages']['data']):0;
+-        $data['messagesPrivate'] = 0;
+-        $data['chatpicsUsed'] = 0;
+-
+-        // Private Stats
+-        if ($rcpts = $data['messages']['rcpt']) {
+-            
+-            unset($rcpts[0]);
+-            unset($rcpts[$this->auth->user()->id]);
+-            //dd($rcpts);
+-            foreach ($rcpts as $rcpt=>$count) {
+-                $data['messagesPrivate'] = $data['messagesPrivate'] + $count;
+-            }
+-        }
+-
+-        // Chatpics Used
+-        if ($chtpcs = $data['messages']['chatpic']) { 
+-            unset($chtpcs['']);
+-            $data['chatpicsUsed'] = count($data['messages']['chatpic']);
+-        }
+-
+@@ -468 +403,2 @@
+-    public function messageManager($room = NULL)
++
++    public function messagemanager()
+@@ -476,14 +411,0 @@
+-        $data['room'] = $room;
+-        
+-        $builder = $this->flaggedModel;
+-        if ($room) {
+-           $builder = $builder->join('messages','messages_flags.mid = messages.id','left');
+-           $builder = $builder->where('messages.room',$room);
+-        }
+-        $data['flagged'] =  $builder->findAll();
+-
+-        $builder = $this->messagesModel;
+-        $data['messages'] =  $builder->limit(10)->orderBy('id','desc')->find();
+-
+-        //dd($data['flagged']);
+-
+@@ -493,172 +414,0 @@
+-
+-    public function messageview($id=NULL)
+-    {
+-        $data['siteName'] = 'The Park Chat';
+-        $data['pageTitle'] = 'Message Viewer';
+-
+-        $data['user'] = $this->auth->user();
+-        $data['plugins'] = ['datatable'];
+-
+-        if ($id) {
+-
+-            $data['message'] = $this->messagesModel->find($id);
+-
+-            if ($data['message']) {
+-                return view('admin/dashboard/messageviewer',$data);
+-            } else {
+-                return redirect()->back()->withInput()->with('errors','Message Not Found.');
+-            }
+-
+-        }
+-
+-        if ($this->request->getMethod() == "post") {
+-            //d($this->request,$id,$this->request->getPost('mid'));
+-
+-            $data['message'] = $this->messagesModel->find($this->request->getPost('mid'));
+-
+-            return view('admin/dashboard/messageviewer',$data);
+-
+-        }
+-
+-        return redirect()->back()->withInput()->with('errors','Invalid Request Method.');
+-    }
+-
+-    public function flagDelete($flag)
+-    {
+-
+-        if ($flag) {
+-            if ($this->flaggedModel->delete($flag)) {
+-                return redirect()->back()->withInput()->with('message','Successfully deleted flagged message.');
+-            } {
+-                return redirect()->back()->withInput()->with('errors','Error deleting flagged message.');
+-            }
+-        }
+-        return redirect()->back()->withInput()->with('errors','Invalid Request');
+-
+-    }
+-    
+-    public function chatpicManager()
+-    {
+-        $data['siteName'] = 'The Park Chat';
+-        $data['pageTitle'] = 'Chatpic Manager';
+-
+-        $data['user'] = $this->auth->user();
+-        $data['plugins'] = ['datatable'];
+-
+-
+-        return view('admin/dashboard/chatpicmanager',$data);
+-    }
+-
+-    public function chatpicManagerGroups()
+-    {
+-        $data['siteName'] = 'The Park Chat';
+-        $data['pageTitle'] = 'Chatpic Group Manager';
+-
+-        $data['user'] = $this->auth->user();
+-        $data['plugins'] = ['datatable'];
+-
+-        $model = $this->chatpicKeywordsModel;
+-
+-        $data['groups'] = $model->find();
+-
+-
+-        return view('admin/dashboard/pages/chatpics/groups',$data);
+-    }
+-
+-    public function chatpics($type = NULL, $action = NULL, $id = NULL) {
+-
+-        d($type,$action,$id);
+-
+-        if (!$id)  { return redirect()->back()->withInput()->with('errors','Invalid ID'); }
+-        if (!is_numeric($id)) { return redirect()->back()->withInput()->with('errors','Invalid ID'); }
+-
+-        switch ($type) {
+-            case 'group':
+-                $model = $this->chatpicKeywordsModel;
+-                break;
+-            default:
+-                $model = NULL;
+-                break;
+-
+-        }
+-
+-        if (!$model)  { return redirect()->back()->withInput()->with('errors','Invalid Request'); }
+-
+-        switch ($action) {
+-            case 'view':
+-                
+-                break;
+-            case 'delete':
+-
+-                break;
+-            case 'edit':
+-
+-                break;
+-        }
+-
+-        if (!$action) { return redirect()->back()->withInput()->with('errors','Invalid Action'); }
+-
+-        return "passed";
+-
+-    }
+-
+-    public function messageSend($messageId = NULL) 
+-    {
+-
+-        $data['user'] = $this->auth->user();
+-
+-        if ($this->request->getMethod() == "post") {
+-            if ($messageData = $this->request->getPost() ?? NULL) {
+-
+-                $data['uid'] = $messageData['uid'] ?? NULL;
+-                $data['user'] = $messageData['user'] ?? NULL;
+-                $data['room'] = $messageData['room'] ?? NULL;
+-                $data['source'] = $this->request->getIPAddress() ?? NULL;
+-                switch ($messageData['to']) {
+-                    case 1:
+-                        $data['rcpt'] = messageLookup($messageId)->uid ?? NULL;
+-                        break;
+-                    case 2:
+-                        $data['rcpt'] = 0;
+-                        break;
+-                    case 3:
+-                        $data['rcpt'] = 0;
+-                        break;
+-
+-                }
+-                $data['rcpt_handle'] = messageLookup($messageId)->user ?? NULL;
+-                $data['location'] = $messageData['location'] ?? NULL;
+-                $data['gender'] = 0;
+-                $data['mood'] = 0;
+-                $data['data'] = $messageData['message'] ?? NULL;
+-                $data['chatpic'] = $messageData['chatpic'] ?? NULL;
+-
+-                foreach ($data as $field) {
+-                    if (is_null($field)) {
+-                        return redirect()->back()->withInput()->with('errors','Incomplete Data');
+-                    }
+-                }
+-
+-                if ($model = $this->messagesModel) {
+-                    //dd($messageData);
+-                    if ($messageData['to'] == 2) {
+-                        $data['data'] = $data['rcpt_handle'] . ": " . $data['data'];
+-                    }
+-
+-                    if ($model->save($data)) {
+-                        return redirect()->to('/admin/dashboard/messages/')->with('message','Message successfully sent.');
+-                    }
+-
+-
+-                } 
+-
+-            }
+-        } else {
+-            return redirect()->back()->withInput()->with('errors','Invalid Method');
+-        }
+-
+-
+-        dd();
+-    }
+-
+-
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Controllers/Chat.php ../../theparkchat.com/public_html/app/Controllers/Chat.php
+--- ./app/Controllers/Chat.php	2022-08-10 15:47:49.942224542 +0000
++++ ../../theparkchat.com/public_html/app/Controllers/Chat.php	2022-08-10 15:39:57.561544846 +0000
+@@ -338,0 +339 @@
++            $messages->where('room = ' . $this->data->room->details->id); 
+@@ -358,2 +358,0 @@
+-            $messages->where('( room = ' . $this->data->room->details->id . ' OR room = 0 OR room = NULL )'); 
+-
+@@ -370 +369 @@
+-            d($this->data);
++           // d($this->data);
+@@ -832 +831 @@
+-}
+\ No newline at end of file
++}
+Only in ./app/Controllers: Settings.php
+Only in ./app/Controllers: Test.php
+Only in ./app/Views/admin/dashboard: chatpicmanager.php
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/layout.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/layout.php
+--- ./app/Views/admin/dashboard/layout.php	2022-07-19 21:22:03.486675410 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/layout.php	2022-03-05 02:06:42.210119236 +0000
+@@ -40 +40 @@
+-    <?= $this->include('admin/dashboard/widgets/banner') ?>
++    <?= $this->include('admin/dashboard/widgets/probanner') ?>
+@@ -50,10 +50 @@
+-            <?php
+-             $session = \Config\Services::session();
+-             $this->error = $session->get('errors') ?? NULL;
+-              if ( $this->error ) {
+-                //dd($error);
+-            ?>
+-            <?= $this->include('admin/dashboard/partials/errorbanner') ?>
+-            <?php
+-              }
+-            ?>
++            <?= $this->include('admin/dashboard/partials/banner') ?>
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/messagemanager.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/messagemanager.php
+--- ./app/Views/admin/dashboard/messagemanager.php	2022-07-18 22:00:10.772620660 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/messagemanager.php	2022-07-01 23:48:31.345261342 +0000
+@@ -4,3 +4,2 @@
+-<?php
+-  if ($room) {
+-?>
++
++
+@@ -8 +7 @@
+-  <div class="col grid-margin">
++  <div class="col-sm-4 grid-margin">
+@@ -11,2 +10,11 @@
+-        <div class="card-title">
+-          <h1><?= getRoomInfo($room)->name ?></h1>
++        <h5>Messages</h5>
++        <div class="row">
++          <div class="col-8 col-sm-12 col-xl-8 my-auto">
++            <div class="d-flex d-sm-block d-md-flex align-items-center">
++              <h2 class="mb-0"><?= getMessageCount() ?></h2>
++            </div>
++            <h6 class="text-muted font-weight-normal">Total Messages</h6>
++          </div>
++          <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
++            <i class="icon-lg mdi mdi-android-messages text-primary ms-auto"></i>
++          </div>
+@@ -17,26 +25 @@
+-</div>
+-<?php
+-  }
+-?>
+-
+-
+-<div class="row">
+-  <div class="col-sm-4 grid-margin">
+-    <?= view('admin/dashboard/widgets/cards/totalmessages') ?>
+-  </div>
+-  <div class="col-sm-4 grid-margin">
+-    <?php
+-      if ($room) {
+-    ?>
+-    <?= view('admin/dashboard/widgets/cards/flaggedMessages') ?>
+-    <?php
+-      } else {
+-    ?>
+-    <?= view('admin/dashboard/widgets/cards/totalflaggedMessages') ?>
+-    <?php 
+-      }
+-    ?>
+-  </div>
+-  <div class="col-sm-4 grid-margin">
+-    <?= view('admin/dashboard/widgets/cards/messageLookup') ?>
+-  </div>
++  
+@@ -45,11 +27,0 @@
+-<div class="row">
+-  <div class="col">
+-    <?= view('admin/dashboard/widgets/tables/flaggedMessages') ?>
+-  </div>
+-</div>
+-
+-<div class="row">
+-  <div class="col">
+-    <?= view('admin/dashboard/widgets/tables/latestMessages') ?>
+-  </div>
+-</div>
+Only in ./app/Views/admin/dashboard: messageviewer.php
+Only in ./app/Views/admin/dashboard: pages
+Only in ./app/Views/admin/dashboard/partials: errorbanner.php
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/partials/navbar.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/partials/navbar.php
+--- ./app/Views/admin/dashboard/partials/navbar.php	2022-07-18 21:44:28.664193476 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/partials/navbar.php	2022-03-05 02:06:42.210119236 +0000
+@@ -4 +4 @@
+-            <a class="navbar-brand brand-logo-mini" href="/"><img src="/assets/images/logo-mini.svg" alt="logo" /></a>
++            <a class="navbar-brand brand-logo-mini" href="index.html"><img src="/assets/images/logo-mini.svg" alt="logo" /></a>
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/partials/sidebar.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/partials/sidebar.php
+--- ./app/Views/admin/dashboard/partials/sidebar.php	2022-07-18 23:53:13.108539880 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/partials/sidebar.php	2022-07-01 23:47:36.894398453 +0000
+@@ -4,2 +4,2 @@
+-          <a class="sidebar-brand brand-logo" href="/"><img src="/assets/images/logo.svg" alt="logo" /></a>
+-          <a class="sidebar-brand brand-logo-mini" href="/"><img src="/assets/images/logo-mini.svg" alt="logo" /></a>
++          <a class="sidebar-brand brand-logo" href="index.html"><img src="/assets/images/logo.svg" alt="logo" /></a>
++          <a class="sidebar-brand brand-logo-mini" href="index.html"><img src="/assets/images/logo-mini.svg" alt="logo" /></a>
+@@ -124 +124 @@
+-            <a class="nav-link" data-bs-toggle="collapse" href="#ui-chatpics" aria-expanded="false" aria-controls="ui-chatpics">
++            <a class="nav-link" href="pages/icons/mdi.html">
+@@ -126 +126 @@
+-                <i class="mdi mdi-image-multiple"></i>
++                <i class="mdi mdi-contacts"></i>
+@@ -128,2 +128 @@
+-              <span class="menu-title">Chatpics</span>
+-              <i class="menu-arrow"></i>
++              <span class="menu-title">Icons</span>
+@@ -131,6 +129,0 @@
+-            <div class="collapse" id="ui-chatpics">
+-              <ul class="nav flex-column sub-menu">
+-                <li class="nav-item"> <a class="nav-link" href="/admin/chatpics">Chatpics</a></li>
+-                <li class="nav-item"> <a class="nav-link" href="/admin/chatpics/groups">Groups</a></li>
+-              </ul>
+-            </div>
+@@ -138 +130,0 @@
+-
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/usergroups.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/usergroups.php
+--- ./app/Views/admin/dashboard/usergroups.php	2022-07-19 23:22:15.327328784 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/usergroups.php	2022-03-05 02:06:42.210119236 +0000
+@@ -6,9 +6,20 @@
+-<div class="row">
+-  <div class="col-sm-4 grid-margin">
+-    <div class="card">
+-      <div class="card-body">
+-        <h5>Groups</h5>
+-        <div class="row">
+-          <div class="col-8 col-sm-12 col-xl-8 my-auto">
+-            <div class="d-flex d-sm-block d-md-flex align-items-center">
+-              <h2 class="mb-0"><?= count($groups) ?></h2>
++            <div class="row">
++              <div class="col-sm-4 grid-margin">
++                <div class="card">
++                  <div class="card-body">
++                    <h5>Groups</h5>
++                    <div class="row">
++                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
++                        <div class="d-flex d-sm-block d-md-flex align-items-center">
++                          <h2 class="mb-0"><?= count($groups) ?></h2>
++                        </div>
++                        <h6 class="text-muted font-weight-normal">Total User Groups</h6>
++                      </div>
++                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
++                        <i class="icon-lg mdi mdi-account-group text-primary ms-auto"></i>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
++              
+@@ -16,11 +26,0 @@
+-            <h6 class="text-muted font-weight-normal">Total User Groups</h6>
+-          </div>
+-          <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+-            <i class="icon-lg mdi mdi-account-group text-primary ms-auto"></i>
+-          </div>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+-  
+-</div>
+@@ -28,22 +28,37 @@
+-<div class="row grid-margin">
+-  <div class="col-12">
+-    <div class="card">
+-      <div class="card-body">
+-        <h4 class="card-title">User Groups</h4>
+-        <p class="card-description">User groups for all users</p>
+-        <div class="table-responsive" >
+-        <table class="table" id="data-table"> 
+-        <thead>
+-        <tr>
+-          <th>Name</th>
+-          <th>User Count</th>
+-          <th>Actions</th>
+-        </tr>
+-        </thead>
+-        <tbody>
+-          <?php
+-          foreach ($groups as $group) {
+-            ?>
+-          <tr>
+-            <td><?= $group->description ?></td>
+-              <td><?= getGroupUsersCount($group->id) ?></td>
++            <div class="row grid-margin">
++              <div class="col-12">
++                <div class="card">
++                  <div class="card-body">
++                    <h4 class="card-title">User Groups</h4>
++                    <p class="card-description">User groups for all users</p>
++                    <div class="table-responsive" >
++                    <table class="table" id="data-table"> 
++                    <thead>
++                    <tr>
++                      <th>Name</th>
++                      <th>User Count</th>
++                      <th>Actions</th>
++                    </tr>
++                    </thead>
++                    <tbody>
++                      <?php
++                      foreach ($groups as $group) {
++                        ?>
++                      <tr>
++                        <td><?= $group->description ?></td>
++                          <td><?= getGroupUsersCount($group->id) ?></td>
++
++                      <td>
++                        <a href="/admin/dashboard/users/group/view/<?= $user->id ?>" class="btn btn-outline-primary">View</a>
++                      </td>
++                    </tr>
++                    <?php
++                    }
++                    ?>
++                    </tbody>
++                  </table>
++                    </div>
++                  </div>
++                </div>
++              </div>
++            </div>
+@@ -51,14 +65,0 @@
+-          <td>
+-            <a href="/admin/dashboard/users/group/view/<?= $group->id ?>" class="btn btn-outline-primary">View</a>
+-          </td>
+-        </tr>
+-        <?php
+-        }
+-        ?>
+-        </tbody>
+-      </table>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+-</div>
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/users/edit.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/users/edit.php
+--- ./app/Views/admin/dashboard/users/edit.php	2022-07-12 19:08:42.548482785 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/users/edit.php	2022-06-09 21:44:09.449263477 +0000
+@@ -9,73 +9,51 @@
+-                    <form action="/admin/dashboard/user/save/<?= $user->id ?>" method="POST">
+-                      <div class="d-flex flex-row justify-content-between mb-2">
+-                        <h3 class="card-title mb-1">User Details</h4>
+-                        <p class="text-muted mb-1"><button type="submit" class="btn btn-outline-success">Save</button> <a href="/admin/dashboard/user/view/<?= $user->id ?>" class="btn btn-outline-danger">Cancel</a></p>
+-                      </div>
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Name:</h6>
+-                        <div class="col-sm-9"><p><?= $user->username ?></p></div>
+-                      </div>
+-                      
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Email:</h6>
+-                        <div class="col-sm-9"><p><?= $user->email ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Status:</h6>
+-                        <div class="col-sm-9"><p><?= $user->status ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Active:</h6>
+-                        <div class="col-sm-9"><p><?= getStatusHTML($user->active) ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Created:</h6>
+-                        <div class="col-sm-9"><p><?= $user->created_at ?? "&nbsp;" ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Updated:</h6>
+-                        <div class="col-sm-9"><p><?= $user->updated_at ?? "&nbsp;" ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Deleted:</h6>
+-                        <div class="col-sm-9"><p><?= $user->deleted_at ?? "&nbsp;" ?></p></div>
+-                      </div>
+-
+-                      <div class=" row">
+-                        <h6 for="name" class="col-sm-3">Groups:</h6>
+-                        <div class="col-sm-9">
+-                          <p>
+-                            <div class="col-sm-6">
+-                              <div class="row">
+-                                <div th:each="group : ${usergroups}">
+-                                  <?php 
+-                                  $i = 0;
+-                                    foreach ($groupsAvailable as $agroup) {
+-                                      if (($i % 3) == 0) {
+-                                        ?><div class="col-xs-6"><?php
+-                                      }
+-                                      //d($agroup);
+-                                      ?>
+-                                      <div class="checkbox">
+-                                      <label>
+-                                        <input type="checkbox" name="groups[]" value="<?= $agroup['id'] ?>"
+-                                        <?php 
+-                                        foreach($groups as $group) 
+-                                          if ($group->id == $agroup['id']) {
+-                                          ?> 
+-                                          checked
+-                                          <?php } ?>
+-                                          >
+-                                        <?= $agroup['description'] ?>
+-                                      </label>
+-                                    </div>
+-                                    <?php
+-                                      $i++;
+-                                      if (($i % 3) == 0) {
+-                                        ?></div><?php
+-                                      }
++                    <div class="d-flex flex-row justify-content-between mb-2">
++                      <h3 class="card-title mb-1">User Details</h4>
++                      <p class="text-muted mb-1"><a href="/admin/dashboard/user/save/<?= $user->id ?>" class="btn btn-outline-success">Save</a> <a href="/admin/dashboard/user/view/<?= $user->id ?>" class="btn btn-outline-danger">Cancel</a></p>
++                    </div>
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Name:</h6>
++                      <div class="col-sm-9"><p><?= $user->username ?></p></div>
++                    </div>
++                    
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Email:</h6>
++                      <div class="col-sm-9"><p><?= $user->email ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Status:</h6>
++                      <div class="col-sm-9"><p><?= $user->status ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Active:</h6>
++                      <div class="col-sm-9"><p><?= getStatusHTML($user->active) ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Created:</h6>
++                      <div class="col-sm-9"><p><?= $user->created_at ?? "&nbsp;" ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Updated:</h6>
++                      <div class="col-sm-9"><p><?= $user->updated_at ?? "&nbsp;" ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Deleted:</h6>
++                      <div class="col-sm-9"><p><?= $user->deleted_at ?? "&nbsp;" ?></p></div>
++                    </div>
++
++                    <div class=" row">
++                      <h6 for="name" class="col-sm-3">Groups:</h6>
++                      <div class="col-sm-9">
++                        <p>
++                          <div class="col-sm-6">
++                            <div class="row">
++                              <div th:each="group : ${usergroups}">
++                                <?php 
++                                $i = 0;
++                                  foreach ($groupsAvailable as $agroup) {
++                                    if (($i % 3) == 0) {
++                                      ?><div class="col-xs-6"><?php
+@@ -83 +61 @@
+-                                  
++                                    //d($agroup);
+@@ -84,0 +63,21 @@
++                                    <div class="checkbox">
++                                    <label>
++                                      <input type="checkbox" value="<?= $agroup['id'] ?>"
++                                      <?php 
++                                      foreach($groups as $group) 
++                                        if ($group->id == $agroup['id']) {
++                                        ?> 
++                                        checked
++                                        <?php } ?>
++                                        >
++                                      <?= $agroup['description'] ?>
++                                    </label>
++                                  </div>
++                                  <?php
++                                    $i++;
++                                    if (($i % 3) == 0) {
++                                      ?></div><?php
++                                    }
++                                  }
++                                
++                                  ?>
+@@ -87 +85,0 @@
+-                                </div>
+@@ -89 +86,0 @@
+-
+@@ -92,2 +89,3 @@
+-                          </p>
+-                        </div>
++                          </div>
++
++                        </p>
+@@ -95 +93,2 @@
+-                    </form>
++                    </div>
++
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/users/view.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/users/view.php
+--- ./app/Views/admin/dashboard/users/view.php	2022-07-12 20:48:21.019152558 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/users/view.php	2022-06-09 21:45:29.605449776 +0000
+@@ -51 +51,11 @@
+-                        <p><?= getUserGroups($user->id,1) ?></p>
++                        <p>
++                          <?php 
++                            if ($groups) {
++                              foreach ($groups as $group) {
++                                ?>
++                                  <?= $group->description ?>
++                                <?php
++                              }
++                            }
++                          ?>
++                        </p>
+@@ -68 +78 @@
+-                          <p><?= $userStats['roomsVisited'] ?></p>
++                          <p><?= count($userStats['actions']['rid']) ?></p>
+@@ -75 +85 @@
+-                          <p><?= $userStats['nicksUsed'] ?></p>
++                          <p><?= count($userStats['messages']['user']) ?></p>
+@@ -82 +92 @@
+-                          <p><?= $userStats['messagesSent'] ?></p>
++                          <p><?= count($userStats['messages']['data']) ?></p>
+@@ -89 +99,15 @@
+-                          <p><?= $userStats['messagesPrivate'] ?></p>
++                          <p>
++                            <?php
++                              $rcpts = $userStats['messages']['rcpt'];
++                              unset($rcpts[0]);
++                              unset($rcpts[$user->id]);
++                              //d($rcpts);
++                              $i = 0;
++                              foreach ($rcpts as $rcpt=>$count) {
++                                $i = $i + $count;
++                              }
++
++                              ?>
++                              </p>
++                            <?= $i ?>
++                          </p>
+@@ -96 +120,7 @@
+-                          <p><?= $userStats['chatpicsUsed'] ?> </p>
++                          <p>
++                            <?php if (isset($userStats['messages']['chatpic'][''])) { ?>
++                              <?= count($userStats['messages']['chatpic'])-1 ?>
++                            <?php } else { ?>
++                              <?= count($userStats['messages']['chatpic']) ?>
++                            <?php } ?>
++                          </p>
+@@ -103 +133 @@
+-                          <p><?= count($userStats['actions']['gender'] ?? array()) ?></p>
++                          <p><?= count($userStats['actions']['gender']) ?></p>
+@@ -110 +140 @@
+-                          <p><?= count($userStats['actions']['mood'] ?? array()) ?></p>
++                          <p><?= count($userStats['actions']['mood']) ?></p>
+@@ -142,3 +172,2 @@
+-                      if (is_array($userStats['actions']['rid'])) {
+-                        foreach ($userStats['actions']['rid'] as $rid=>$actionCount) {
+-                          $roomInfo = getRoomInfo($rid);
++                      foreach ($userStats['actions']['rid'] as $rid=>$actionCount) {
++                        $roomInfo = getRoomInfo($rid);
+@@ -158,2 +187 @@
+-                        }
+-                      }
++                    }
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/users.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/users.php
+--- ./app/Views/admin/dashboard/users.php	2022-07-14 17:50:48.166514775 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/users.php	2022-03-05 02:06:42.210119236 +0000
+@@ -8,29 +8,16 @@
+-                <?= view('admin/dashboard/widgets/cards/users/totalUsers') ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-                <?= view('admin/dashboard/widgets/cards/users/totalAdmins') ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-                <?= view('admin/dashboard/widgets/cards/users/totalRangers') ?>
+-              </div>
+-            </div>
+-            <div class="row">
+-              <div class="col-sm-4 grid-margin">
+-                <?= view('admin/dashboard/widgets/cards/users/totalGuests') ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-              <?= view('admin/dashboard/widgets/cards/users/totalLifetime') ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-              <?= view('admin/dashboard/widgets/cards/users/totalHosts') ?>
+-              </div>
+-            </div>
+-            <div class="row">
+-              <div class="col-sm-4 grid-margin">
+-                <?= view('admin/dashboard/widgets/cards/users/totalGeneral') ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-              <?= view('admin/dashboard/widgets/cards/users/totalActiveInactive',['active'=>1]) ?>
+-              </div>
+-              <div class="col-sm-4 grid-margin">
+-              <?= view('admin/dashboard/widgets/cards/users/totalActiveInactive',['active'=>0]) ?>
++                <div class="card">
++                  <div class="card-body">
++                    <h5>Users</h5>
++                    <div class="row">
++                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
++                        <div class="d-flex d-sm-block d-md-flex align-items-center">
++                          <h2 class="mb-0"><?= getUserTotal() ?></h2>
++                        </div>
++                        <h6 class="text-muted font-weight-normal">Current Users</h6>
++                      </div>
++                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
++                        <i class="icon-lg mdi mdi-account-group text-primary ms-auto"></i>
++                      </div>
++                    </div>
++                  </div>
++                </div>
+@@ -37,0 +25 @@
++              
+@@ -47,34 +35,35 @@
+-                      <table class="table" id="data-table"> 
+-                        <thead>
+-                          <tr>
+-                            <th>Name</th>
+-                            <th>Email</th>
+-                            <th>Group</th>
+-                            <th>Status</th>
+-                            <th>Active</th>
+-                            <th>Join Date</th>
+-                            <th>Actions</th>
+-                          </tr>
+-                        </thead>
+-                        <tbody>
+-                          <?php
+-                          foreach ($users as $user) {
+-                            ?>
+-                          <tr>
+-                            <td><a href="/admin/dashboard/user/view/<?= $user->id ?>"><?= $user->username ?></a></td>
+-                            <td><?= $user->email ?></td>
+-                            <td><a href="/admin/dashboard/users/group/view/<?= getUserGroup($user->id)['id'] ?>"><?= getUserGroup($user->id)['description'] ?></a></td>
+-                            <td><?= $user->status ?></td>
+-                            <td><?= getStatusHTML($user->active) ?></td>
+-                            <td><?= getJoinDate($user->created_at) ?></td>
+-                            <td>
+-                              <a href="/admin/dashboard/user/view/<?= $user->id ?>" class="btn btn-outline-primary">View</a>
+-                              <a href="/admin/dashboard/user/kick/<?= $user->id ?>" class="btn btn-outline-warning">Kick</a>
+-                              <a href="/admin/dashboard/user/ban/<?= $user->id ?>" class="btn btn-outline-danger">Ban</a>
+-                            </td>
+-                          </tr>
+-                          <?php
+-                            }
+-                          ?>
+-                        </tbody>
+-                      </table>
++                    <table class="table" id="data-table"> 
++                    <thead>
++                    <tr>
++                      <th>Name</th>
++                      <th>Email</th>
++                      <th>Group</th>
++                      <th>Status</th>
++                      <th>Active</th>
++                      <th>Join Date</th>
++                      <th>Actions</th>
++                    </tr>
++                    </thead>
++                    <tbody>
++                      <?php
++                      foreach ($users as $user) {
++                        ?>
++                      <tr>
++                        <td><a href="/admin/dashboard/user/view/<?= $user->id ?>"><?= $user->username ?></a></td>
++                          <td><?= $user->email ?></td>
++                          <td><a href="/admin/dashboard/users/group/view/<?= getUserGroup($user->id)['id'] ?>"><?= getUserGroup($user->id)['description'] ?></a></td>
++                          <td><?= $user->status ?></td>
++                          <td><?= getStatusHTML($user->active) ?></td>
++                          <td><?= getJoinDate($user->created_at) ?></td>
++
++                      <td>
++                      <a href="/admin/dashboard/user/view/<?= $user->id ?>" class="btn btn-outline-primary">View</a>
++                      <a href="/admin/dashboard/user/kick/<?= $user->id ?>" class="btn btn-outline-warning">Kick</a>
++                      <a href="/admin/dashboard/user/ban/<?= $user->id ?>" class="btn btn-outline-danger">Ban</a>
++                      </td>
++                    </tr>
++                    <?php
++}
++?>
++                    </tbody>
++                  </table>
+Only in ./app/Views/admin/dashboard/widgets: banner.php
+Only in ./app/Views/admin/dashboard/widgets/cards: chatpicLookup.php
+Only in ./app/Views/admin/dashboard/widgets/cards: chatpics
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/widgets/cards/currentUsers.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/widgets/cards/currentUsers.php
+--- ./app/Views/admin/dashboard/widgets/cards/currentUsers.php	2022-07-12 23:11:39.379412601 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/widgets/cards/currentUsers.php	2022-03-05 02:06:42.206119020 +0000
+@@ -2,17 +2,17 @@
+-  <div class="card">
+-    <div class="card-body">
+-      <h5>Current Users</h5>
+-      <div class="row">
+-        <div class="col-8 col-sm-12 col-xl-8 my-auto">
+-          <div class="d-flex d-sm-block d-md-flex align-items-center">
+-            <h2 class="mb-0"><?= getRoomUserCount($room->id) ?></h2>
+-          </div>
+-          <h6 class="text-muted font-weight-normal">Current Users in room.</h6>
+-        </div>
+-        <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+-          <i class="icon-lg mdi mdi-account-group text-primary ms-auto"></i>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+-</div>
+\ No newline at end of file
++                <div class="card">
++                  <div class="card-body">
++                    <h5>Current Users</h5>
++                    <div class="row">
++                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
++                        <div class="d-flex d-sm-block d-md-flex align-items-center">
++                          <h2 class="mb-0"><?= getRoomUserCount($room->id) ?></h2>
++                        </div>
++                        <h6 class="text-muted font-weight-normal">Current Users in room.</h6>
++                      </div>
++                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
++                        <i class="icon-lg mdi mdi-account-group text-primary ms-auto"></i>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
+\ No newline at end of file
+diff -r '--unified=0' '--exclude=diff.sh' '--exclude=stats' '--exclude=.*' '--exclude=writable' '--exclude=vendor' '--exclude=composer.lock' ./app/Views/admin/dashboard/widgets/cards/flaggedMessages.php ../../theparkchat.com/public_html/app/Views/admin/dashboard/widgets/cards/flaggedMessages.php
+--- ./app/Views/admin/dashboard/widgets/cards/flaggedMessages.php	2022-07-12 22:16:33.360342863 +0000
++++ ../../theparkchat.com/public_html/app/Views/admin/dashboard/widgets/cards/flaggedMessages.php	2022-03-05 02:06:42.206119020 +0000
+@@ -1,16 +1,18 @@
+-  <div class="card">
+-    <div class="card-body">
+-      <h5>Flagged Messages</h5>
+-      <div class="row">
+-        <div class="col-8 col-sm-12 col-xl-8 my-auto">
+-          <div class="d-flex d-sm-block d-md-flex align-items-center">
+-            <h2 class="mb-0"><?= getRoomFlagged($room) ?></h2>
+-          </div>
+-          <h6 class="text-muted font-weight-normal">Messages flagged.</h6>
+-        </div>
+-        <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+-          <i class="icon-lg mdi mdi-flag text-primary ms-auto"></i>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+\ No newline at end of file
++<div class="col-sm-<?= $width ?> grid-margin">
++                <div class="card">
++                  <div class="card-body">
++                    <h5>Flagged Messages</h5>
++                    <div class="row">
++                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
++                        <div class="d-flex d-sm-block d-md-flex align-items-center">
++                          <h2 class="mb-0"><?= getRoomFlagged($room->id) ?></h2>
++                        </div>
++                        <h6 class="text-muted font-weight-normal">Messages flagged.</h6>
++                      </div>
++                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
++                        <i class="icon-lg mdi mdi-flag text-primary ms-auto"></i>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
+\ No newline at end of file
+Only in ./app/Views/admin/dashboard/widgets/cards: messageLookup.php
+Only in ./app/Views/admin/dashboard/widgets/cards: totalchatpics.php
+Only in ./app/Views/admin/dashboard/widgets/cards: totalflaggedMessages.php
+Only in ./app/Views/admin/dashboard/widgets/cards: totalmessages.php
+Only in ./app/Views/admin/dashboard/widgets/cards: totalprivatechatpics.php
+Only in ./app/Views/admin/dashboard/widgets/cards: users
+Only in ./app/Views/admin/dashboard/widgets: tables
+Only in ../../theparkchat.com/public_html/app/Views/chat: dashboard.php
+Only in ./app/Views/layout: corona
+Only in ./app/Views/pages: settings
+Only in ../../theparkchat.com/public_html/public/img/chatpics/photo/2019/12/30/17: 33

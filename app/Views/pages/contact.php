@@ -17,8 +17,9 @@
       <div class="col-md-6">
         <div class="card bg-transparent">
         <?php $validation = \Config\Services::validation(); ?>
-
-          <form class="form-horizontal" action="/contact" method="post">
+        <?= form_open() ?>
+        <?= reCaptcha3('reCaptcha3', ['id' => 'recaptcha_v3'], ['action' => 'contactForm']); ?>
+          <!--form class="form-horizontal" action="/contact" method="post" id="contactForm"-->
             <h2 class="card-header">Contact Us</h2>
             <div class="card-body">
 
@@ -48,7 +49,7 @@
 
             
 <?php 
-if ($topics = json_decode(getTopics())) { 
+if ($topics = getTopics()) { 
 ?>
    <!-- Subject input-->
    <div class="form-group">
@@ -85,15 +86,27 @@ if ($topics = json_decode(getTopics())) {
             </div>
 
             <!-- reCaptcha v3 -->
+          
             <div class="form-group">
-              <?= reCaptcha3('reCaptcha3', ['id' => 'recaptcha_v3'], ['action' => 'contactForm']) ?>
+               This site is protected by reCAPTCHA and the Google
+    <a href="https://policies.google.com/privacy">Privacy Policy</a> and
+    <a href="https://policies.google.com/terms">Terms of Service</a> apply.
             </div>
-    
-            <!-- Form actions -->
-            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+            <style type="text/css">
+              .grecaptcha-badge { visibility: hidden; }
+              </style>
+            <!-- Form actions -->            
+            <button class="btn btn-primary btn-block" type="submit">Submit</button>
             </div>
 
           </form>
+           <!-- reCaptcha v3 -->
+           <!--script src="https://www.google.com/recaptcha/api.js"></script-->
+            <script>
+              function onSubmit(token) {
+                document.getElementById("contactForm").submit();
+              }
+            </script>
         </div>
       </div>
 	</div>

@@ -13,7 +13,9 @@
         "denis303/codeigniter4-recaptcha": "dev-master",
         "kint-php/kint": "^3.3",
         "laminas/laminas-escaper": "^2.9",
-        "psr/log": "^1.1"
+        "psr/log": "^1.1",
+        "ralouphie/mimey": "^2.1",
+        "zoonman/pixabay-php-api": "^1.0"
     },
     "require-dev": {
         "codeigniter/coding-standard": "^1.1",

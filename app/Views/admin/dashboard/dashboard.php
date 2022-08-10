@@ -10,7 +10,7 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0"><?= ostAPI('ticket','all','status',1)->data->total ?></h3>
+                          <h3 class="mb-0"><?= ostAPI('ticket','all','status',1)->data->total ?? 0 ?></h3>
                           <p class="text-success ms-2 mb-0 font-weight-medium"></p>
                         </div>
                       </div>
@@ -30,7 +30,7 @@
                     <div class="row">
                       <div class="col-9">
                         <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0"><?= ostAPI('tasks','all')->data->total ?></h3>
+                          <h3 class="mb-0"><?= ostAPI('tasks','all')->data->total ?? 0 ?></h3>
                           <p class="text-success ms-2 mb-0 font-weight-medium"></p>
                         </div>
                       </div>

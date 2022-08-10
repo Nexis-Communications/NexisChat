@@ -43,6 +43,7 @@
                     <tbody>
                       <?php
                       //print_r($users);
+                      //d($users);
                       foreach ($users as $user) {
                         //print_r($user);
                         ?>
@@ -51,8 +52,8 @@
                         <td><?= $user['detail']->email ?></td>
 
                       <td>
-                      <a href="/admin/dashboard/users/group/view/<?= $user->id ?>" class="btn btn-outline-primary">View</a>
-                      <a href="/admin/dashboard/users/group/remove/<?= $user->id ?>" class="btn btn-outline-danger">Remove</a>
+                      <a href="/admin/dashboard/user/view/<?= $user['detail']->id ?? NULL ?>" class="btn btn-outline-primary">View</a>
+                      <a href="/admin/dashboard/users/group/remove/<?= $user['detail']->id ?? NULL ?>" class="btn btn-outline-danger">Remove</a>
                       </td>
                     </tr>
                     <?php

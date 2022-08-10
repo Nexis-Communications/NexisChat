@@ -12,6 +12,7 @@ class Contact extends BaseController
         $this->config = new \stdClass();
         $this->uri = service('uri');
         $this->auth = service('authentication');
+        helper(['form','form_recaptcha']);
 
 
     }
@@ -36,9 +37,18 @@ class Contact extends BaseController
 
         } else {
             //$contactModel = model('App\Models\ContactModel');
-            
             $data = array_merge($data,$this->request->getPost());
+            //d($this);
 
+            if (! $this->validate([
+                'reCaptcha3' => 'required|reCaptcha3[contactForm,0.9]',
+                ])) {
+                    return redirect()->back()->withInput()->with('error',$this->validator->getErrors());
+            } else {
+                //d('Success');
+            }
+
+            //dd($data);
             // post data
             /** 
             * loggedin  =>  boolean

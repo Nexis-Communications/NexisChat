@@ -15,7 +15,7 @@ return [
     'nickname'                  => 'Nickname',
     'location'                  => 'Location',
     'gender'                    => 'Your Gender',
-    'mood'                      => 'Current Attitute',
+    'mood'                      => 'Current Attitude',
     'pushSpeak'                 => 'Push to Speak',
     'towhom'                    => 'Message for',
     'message'                   => 'Message',

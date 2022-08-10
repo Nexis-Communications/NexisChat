@@ -49,7 +49,11 @@ $hasMessage = session()->get('message');
               
       <?php if ($hasError) { ?>
       <div class="alert alert-danger alert-dismissible fade show" role="alert">
+<?php if (is_array($hasError)) { ?>
+    <?php print_r('reCaptcha: ' . $hasError['reCaptcha3']) ?>
+<?php } else { ?>
         <?= $hasError ?>
+<?php  } ?>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>

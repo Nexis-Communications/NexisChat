@@ -25,8 +25,6 @@
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-<!-- Load Messenger Plugin-->
-<?= view('plugins/fb-messenger/main') ?>
 
 <div class="header">
     <?= view('Views\_navbar') ?>

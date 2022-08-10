@@ -13,6 +13,9 @@
             <li class="nav-item active">
               <a class="nav-link" href="/chat">Chat</a>
             </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="/chatpics">Chatpics</a>
+            </li>
             <li class="nav-item">
               <?php if (!service('authentication')->check()) : ?>
         <a class="nav-link" href="/login">Login</a>
