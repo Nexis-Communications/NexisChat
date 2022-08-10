@@ -66,14 +66,14 @@
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+            <a class="nav-link" data-bs-toggle="collapse" href="#room-manager" aria-expanded="false" aria-controls="room-manager">
               <span class="menu-icon">
                 <i class="mdi mdi-apps"></i>
               </span>
               <span class="menu-title">Room Manager</span>
               <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="ui-basic">
+            <div class="collapse" id="room-manager">
               <ul class="nav flex-column sub-menu">
                 <li class="nav-item"> <a class="nav-link" href="/admin/dashboard/rooms">Rooms</a></li>
                 <li class="nav-item"> <a class="nav-link" href="/admin/dashboard/groups">Groups</a></li>
@@ -81,14 +81,14 @@
             </div>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+            <a class="nav-link" data-bs-toggle="collapse" href="#user-manager" aria-expanded="false" aria-controls="user-manager">
               <span class="menu-icon">
                 <i class="mdi mdi-account"></i>
               </span>
               <span class="menu-title">User Manager</span>
               <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="ui-basic">
+            <div class="collapse" id="user-manager">
               <ul class="nav flex-column sub-menu">
                 <li class="nav-item"> <a class="nav-link" href="/admin/dashboard/users">Users</a></li>
                 <li class="nav-item"> <a class="nav-link" href="/admin/dashboard/users/groups">Groups</a></li>
