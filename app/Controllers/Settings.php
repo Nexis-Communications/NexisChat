@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Models\IgnoredModel;
+use App\Models\BlockedModel;
+
 class Settings extends BaseController
 {
 
@@ -13,6 +16,9 @@ class Settings extends BaseController
         $this->config = new \stdClass();
         $this->uri = service('uri');
         $this->auth = service('authentication');
+        $this->ignoredModel = new IgnoredModel();
+        $this->blockedModel = new BlockedModel();
+
 
     }
 
@@ -57,6 +63,9 @@ class Settings extends BaseController
     public function blocking()
     {
         //d($this);
+        //if ( $this->request->getMethod() == 'GET') {
+            //dd($this->request->getVar());
+        //}
 
         $this->config->siteName = 'The Park Chat';
         $this->config->pageTitle = 'Blocking';
@@ -66,7 +75,47 @@ class Settings extends BaseController
         $data['theme'] = 'corona';
         $data['layout'] = 'layout/'.$data['theme'].'/layout';
         $data['sidebar'] = 'settings/privacy';
+
+        $data['ignoredUsers'] = $this->ignoredModel->select()->where('uid',$data['user']->id)->find();
+        $data['blockedUsers'] = $this->blockedModel->select()->where('uid',$data['user']->id)->find();
+            //d($data);
         return view('pages/settings/blocking',$data);
+
+    }
+
+    public function blockingUpdate($type,$action,$id)
+    {
+        d($type,$action,$id);
+
+        switch ($type) {
+            case "ignored":
+                    $model = $this->ignoredModel;
+                break;
+            case "blocked":
+                    $model = $this->blockedModel;
+                break;
+            default:
+                return redirect()->back()->with('error','invalid method');
+        }
+
+        switch ($action) {
+            case "add":
+                d('add');
+                break;
+            case "delete":
+                if ($model->where('uid',$this->auth->user()->id)->delete($id)) {
+                    return redirect()->back()->with('message','Successfully unignored user.');
+                }
+                break;
+            default:
+                return redirect()->back()->with('error','invalid action');
+        }
+
+
+
+        //if ( $this->request->getMethod() == 'GET') {
+            //dd($this->request->getVar());
+        //}
 
     }
 }

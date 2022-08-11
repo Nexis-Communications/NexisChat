@@ -58,6 +58,8 @@ $routes->add('/admin/chatpics','Admin::chatpicmanager');
 $routes->add('/admin/chatpics/groups','Admin::chatpicmanagergroups');
 $routes->add('/admin/dashboard/flags/delete/(:num)','Admin::flagdelete/$1');
 $routes->add('/admin/message/send/(:num)','Admin::messagesend/$1');
+$routes->add('/settings/blocking/(:alpha)/(:alpha)/(:num)','Settings::blockingUpdate/$1/$2/$3');
+$routes->add('/settings/blocking','Settings::blocking');
 
 
 
